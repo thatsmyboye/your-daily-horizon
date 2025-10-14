@@ -1,10 +1,17 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const generatePulseSchema = z.object({
+  userId: z.string().uuid(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,7 +19,9 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, date } = await req.json();
+    // Parse and validate input
+    const body = await req.json();
+    const { userId, date } = generatePulseSchema.parse(body);
 
     console.log("Generate daily pulse request:", { userId, date });
 
@@ -162,6 +171,18 @@ Make it personal and actionable for their day.`;
 
   } catch (error: any) {
     console.error('Error in generate-daily-pulse:', error);
+    
+    // Handle validation errors separately
+    if (error.name === 'ZodError') {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid input', 
+          details: error.errors 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     return new Response(
       JSON.stringify({ error: error.message || 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -1,10 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const proposeMissionsSchema = z.object({
+  focusAreas: z.array(z.enum(['Mind', 'Body', 'Craft', 'Relationships', 'Finance', 'Spirit', 'Custom'])).min(1).max(7),
+  whyNow: z.string().min(1).max(1000),
+  minutesPerDay: z.number().min(1).max(480),
+  daysPerWeek: z.array(z.string()).min(1).max(7),
+  coachTone: z.enum(['Warm', 'Direct', 'Playful'])
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,9 +22,11 @@ serve(async (req) => {
   }
 
   try {
-    const { focusAreas, whyNow, minutesPerDay, daysPerWeek, coachTone } = await req.json();
+    // Parse and validate input
+    const body = await req.json();
+    const { focusAreas, whyNow, minutesPerDay, daysPerWeek, coachTone } = proposeMissionsSchema.parse(body);
 
-    console.log("Propose missions request:", { focusAreas, whyNow, minutesPerDay, daysPerWeek, coachTone });
+    console.log("Propose missions request:", { focusAreas, whyNow: whyNow.substring(0, 50), minutesPerDay, daysPerWeek, coachTone });
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -143,6 +155,18 @@ For each mission, provide:
 
   } catch (error: any) {
     console.error('Error in propose-missions:', error);
+    
+    // Handle validation errors separately
+    if (error.name === 'ZodError') {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid input', 
+          details: error.errors 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     return new Response(
       JSON.stringify({ error: error.message || 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

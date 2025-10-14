@@ -101,7 +101,6 @@ const Mentor = () => {
     try {
       const { data, error } = await supabase.functions.invoke("mentor-chat", {
         body: {
-          userId,
           messages: [...messages, userMessage].map((m) => ({
             role: m.role,
             content: m.content,
@@ -129,7 +128,6 @@ const Mentor = () => {
         // Execute tool call
         const toolResult = await supabase.functions.invoke("mentor-chat", {
           body: {
-            userId,
             functionCall: toolCall,
           },
         });

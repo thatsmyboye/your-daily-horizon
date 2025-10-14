@@ -1,10 +1,32 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schemas
+const messageSchema = z.object({
+  role: z.enum(['user', 'assistant', 'system']),
+  content: z.string().min(1).max(10000)
+});
+
+const chatRequestSchema = z.object({
+  messages: z.array(messageSchema).min(1).max(50),
+  functionCall: z.object({
+    name: z.string(),
+    args: z.record(z.any())
+  }).optional()
+});
+
+const functionCallSchema = z.object({
+  functionCall: z.object({
+    name: z.string(),
+    args: z.record(z.any())
+  })
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -12,19 +34,57 @@ serve(async (req) => {
   }
 
   try {
-    const { userId, messages, functionCall } = await req.json();
-
-    console.log("Mentor chat request:", { userId, messagesCount: messages.length, functionCall });
+    // Extract and verify user from JWT
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !userData.user) {
+      console.error('Authentication error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid authentication' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const userId = userData.user.id;
+    
+    // Parse and validate request body
+    const body = await req.json();
+    
+    // Determine if this is a function call or chat request
+    let messages: typeof messageSchema._output[] | undefined;
+    let functionCall;
+    
+    if (body.functionCall && !body.messages) {
+      // Function call only
+      const validated = functionCallSchema.parse(body);
+      functionCall = validated.functionCall;
+    } else {
+      // Chat request
+      const validated = chatRequestSchema.parse(body);
+      messages = validated.messages;
+      functionCall = validated.functionCall;
+    }
+
+    console.log("Mentor chat request:", { userId, messagesCount: messages?.length, functionCall: !!functionCall });
 
     // Handle function calls
     if (functionCall) {
       if (functionCall.name === 'saveMentorNote') {
         const { text, tags } = functionCall.args;
-        const { error } = await supabase
+        const { error } = await supabaseClient
           .from('mentor_notes')
           .insert([{
             user_id: userId,
@@ -44,7 +104,7 @@ serve(async (req) => {
         const { missionId } = functionCall.args;
         
         // Get mission details
-        const { data: mission, error: missionError } = await supabase
+        const { data: mission, error: missionError } = await supabaseClient
           .from('missions')
           .select('*')
           .eq('id', missionId)
@@ -107,7 +167,7 @@ serve(async (req) => {
     const today = new Date().toISOString().split('T')[0];
 
     // Get today's entry
-    const { data: todayEntry } = await supabase
+    const { data: todayEntry } = await supabaseClient
       .from('daily_entries')
       .select('*')
       .eq('user_id', userId)
@@ -118,7 +178,7 @@ serve(async (req) => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    const { data: recentEntries } = await supabase
+    const { data: recentEntries } = await supabaseClient
       .from('daily_entries')
       .select('date, mood, reflections, ai_suggestion')
       .eq('user_id', userId)
@@ -127,14 +187,14 @@ serve(async (req) => {
       .limit(7);
 
     // Get active missions
-    const { data: missions } = await supabase
+    const { data: missions } = await supabaseClient
       .from('missions')
       .select('id, title, type, cadence, xp, level, target_per_week')
       .eq('user_id', userId)
       .eq('active', true);
 
     // Get last 10 mentor notes
-    const { data: mentorNotes } = await supabase
+    const { data: mentorNotes } = await supabaseClient
       .from('mentor_notes')
       .select('note, tags, created_at')
       .eq('user_id', userId)
@@ -206,7 +266,7 @@ Keep responses brief (2-4 sentences max). Focus on what they can do RIGHT NOW.`;
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          ...messages
+          ...(messages || [])
         ],
         tools: [
           {
@@ -295,6 +355,18 @@ Keep responses brief (2-4 sentences max). Focus on what they can do RIGHT NOW.`;
 
   } catch (error: any) {
     console.error('Error in mentor-chat:', error);
+    
+    // Handle validation errors separately
+    if (error.name === 'ZodError') {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid input', 
+          details: error.errors 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     return new Response(
       JSON.stringify({ error: error.message || 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
