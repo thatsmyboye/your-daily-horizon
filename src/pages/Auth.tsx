@@ -92,7 +92,7 @@ const Auth = () => {
     }
   };
 
-  const handleOAuthSignIn = async (provider: "google" | "apple") => {
+  const handleOAuthSignIn = async (provider: "google") => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -175,22 +175,13 @@ const Auth = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <Button
-                variant="outline"
-                onClick={() => handleOAuthSignIn("google")}
-                className="rounded-xl"
-              >
-                Google
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleOAuthSignIn("apple")}
-                className="rounded-xl"
-              >
-                Apple
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              onClick={() => handleOAuthSignIn("google")}
+              className="rounded-xl w-full"
+            >
+              Continue with Google
+            </Button>
 
             <div className="mt-6 text-center text-sm">
               <button
