@@ -34,8 +34,16 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          <Route path="/app/missions" element={<Missions />} />
-          <Route path="/app/mentor" element={<Mentor />} />
+          <Route path="/app/missions" element={
+            <ProtectedRoute>
+              <Missions />
+            </ProtectedRoute>
+          } />
+          <Route path="/app/mentor" element={
+            <ProtectedRoute>
+              <Mentor />
+            </ProtectedRoute>
+          } />
           <Route path="/settings" element={<Settings />} />
           <Route path="/docs/setup" element={<DocsSetup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
