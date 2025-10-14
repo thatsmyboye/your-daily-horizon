@@ -14,7 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      checkins: {
+        Row: {
+          entry_id: string | null
+          id: string
+          mission_id: string
+          occurred_at: string | null
+          user_id: string
+          xp_awarded: number | null
+        }
+        Insert: {
+          entry_id?: string | null
+          id?: string
+          mission_id: string
+          occurred_at?: string | null
+          user_id: string
+          xp_awarded?: number | null
+        }
+        Update: {
+          entry_id?: string | null
+          id?: string
+          mission_id?: string
+          occurred_at?: string | null
+          user_id?: string
+          xp_awarded?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkins_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "daily_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkins_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_entries: {
+        Row: {
+          ai_prompt: string | null
+          ai_suggestion: string | null
+          completed: boolean | null
+          created_at: string | null
+          date: string
+          id: string
+          mood: number | null
+          reflections: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_prompt?: string | null
+          ai_suggestion?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          date: string
+          id?: string
+          mood?: number | null
+          reflections?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_prompt?: string | null
+          ai_suggestion?: string | null
+          completed?: boolean | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          mood?: number | null
+          reflections?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mentor_notes: {
+        Row: {
+          created_at: string | null
+          id: string
+          note: string
+          tags: string[] | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          note: string
+          tags?: string[] | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          note?: string
+          tags?: string[] | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      missions: {
+        Row: {
+          active: boolean | null
+          cadence: string | null
+          created_at: string | null
+          id: string
+          intent: string | null
+          level: number | null
+          target_per_week: number | null
+          title: string
+          type: Database["public"]["Enums"]["mission_type"]
+          user_id: string
+          xp: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          cadence?: string | null
+          created_at?: string | null
+          id?: string
+          intent?: string | null
+          level?: number | null
+          target_per_week?: number | null
+          title: string
+          type: Database["public"]["Enums"]["mission_type"]
+          user_id: string
+          xp?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          cadence?: string | null
+          created_at?: string | null
+          id?: string
+          intent?: string | null
+          level?: number | null
+          target_per_week?: number | null
+          title?: string
+          type?: Database["public"]["Enums"]["mission_type"]
+          user_id?: string
+          xp?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string
+          timezone: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id: string
+          timezone?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          timezone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +190,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      mission_type:
+        | "Mind"
+        | "Body"
+        | "Craft"
+        | "Relationships"
+        | "Finance"
+        | "Spirit"
+        | "Custom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +324,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      mission_type: [
+        "Mind",
+        "Body",
+        "Craft",
+        "Relationships",
+        "Finance",
+        "Spirit",
+        "Custom",
+      ],
+    },
   },
 } as const
