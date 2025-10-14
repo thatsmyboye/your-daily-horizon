@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AppLayout from "@/components/AppLayout";
 import { BillingSettings } from "@/components/BillingSettings";
+import { IntegrationsSettings } from "@/components/IntegrationsSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -91,6 +92,9 @@ const Settings = () => {
             </TabsTrigger>
             <TabsTrigger value="notifications" className="rounded-lg">
               Notifications
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="rounded-lg">
+              Integrations
             </TabsTrigger>
             <TabsTrigger value="billing" className="rounded-lg">
               Billing
@@ -191,6 +195,10 @@ const Settings = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="integrations">
+            <IntegrationsSettings />
           </TabsContent>
 
           <TabsContent value="billing">
