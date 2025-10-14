@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sparkles, TrendingUp, MessageCircle, Target } from "lucide-react";
+import logo from "@/assets/logo.png";
+import heroBg from "@/assets/hero-bg.png";
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -34,8 +36,8 @@ const Landing = () => {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl gradient-primary" />
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="Horizon Logo" className="w-10 h-10 rounded-xl" />
             <span className="text-xl font-semibold">Horizon</span>
           </div>
           <Button onClick={() => navigate("/auth")} variant="default">
@@ -45,7 +47,14 @@ const Landing = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-32 pb-20">
+      <section 
+        className="container mx-auto px-4 pt-32 pb-20 relative"
+        style={{
+          backgroundImage: `linear-gradient(rgba(var(--background-rgb, 255, 255, 255), 0.85), rgba(var(--background-rgb, 255, 255, 255), 0.85)), url(${heroBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

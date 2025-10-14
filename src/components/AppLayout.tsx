@@ -2,6 +2,7 @@ import { ReactNode, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,8 +52,8 @@ const AppLayout = ({ children }: AppLayoutProps) => {
     <div className="min-h-screen bg-background flex w-full">
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-sidebar flex flex-col">
-        <div className="h-16 flex items-center gap-2 px-6 border-b border-sidebar-border">
-          <div className="w-8 h-8 rounded-xl gradient-primary" />
+        <div className="h-16 flex items-center gap-3 px-6 border-b border-sidebar-border">
+          <img src={logo} alt="Horizon Logo" className="w-8 h-8 rounded-xl" />
           <span className="text-xl font-semibold">Horizon</span>
         </div>
 
