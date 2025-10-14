@@ -26,3 +26,6 @@ verify_jwt = true
 
 [functions.reset-demo-data]
 verify_jwt = true
+
+[functions.health]
+verify_jwt = false

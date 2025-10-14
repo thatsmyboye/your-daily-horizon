@@ -36,6 +36,20 @@ npm i
 npm run dev
 ```
 
+**Environment Configuration**
+
+The `.env` file is auto-managed by Lovable Cloud and includes:
+- `VITE_SUPABASE_URL` - Your backend URL
+- `VITE_SUPABASE_PUBLISHABLE_KEY` - Public API key
+- `VITE_SUPABASE_PROJECT_ID` - Project identifier
+
+For local development with test mode enabled, manually add:
+```sh
+VITE_TEST_MODE=true
+```
+
+For complete setup documentation, visit `/docs/setup` in your running app.
+
 **Edit a file directly in GitHub**
 
 - Navigate to the desired file(s).

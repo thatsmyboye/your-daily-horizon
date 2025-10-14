@@ -10,6 +10,7 @@ import Missions from "./pages/Missions";
 import Mentor from "./pages/Mentor";
 import Onboarding from "./pages/Onboarding";
 import Settings from "./pages/Settings";
+import DocsSetup from "./pages/DocsSetup";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/app/missions" element={<Missions />} />
           <Route path="/app/mentor" element={<Mentor />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/docs/setup" element={<DocsSetup />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
