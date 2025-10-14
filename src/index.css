@@ -153,4 +153,22 @@ All colors MUST be HSL.
   .gradient-subtle {
     background: var(--gradient-subtle);
   }
+
+  /* Horizon component utilities */
+  .glass-card {
+    @apply bg-white/70 dark:bg-card/70 backdrop-blur-sm;
+  }
+
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(var(--horizon-primary) / 0.3);
+    }
+    50% {
+      box-shadow: 0 0 30px hsl(var(--horizon-primary) / 0.5);
+    }
+  }
 }

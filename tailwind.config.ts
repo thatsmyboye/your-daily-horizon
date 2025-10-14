@@ -71,6 +71,15 @@ export default {
           neutral: "hsl(var(--mood-neutral))",
           low: "hsl(var(--mood-low))",
         },
+        horizon: {
+          bg: "hsl(var(--background))",
+          primary: "hsl(var(--primary))",
+          secondary: "hsl(var(--secondary))",
+          accent: "hsl(var(--accent))",
+          success: "hsl(var(--success))",
+          danger: "hsl(var(--destructive))",
+          muted: "hsl(var(--muted))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
