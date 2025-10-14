@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.generate-daily-pulse]
 verify_jwt = true
+
+[functions.mentor-chat]
+verify_jwt = true
