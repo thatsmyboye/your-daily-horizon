@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Sparkles, Loader2, Crown, AlertCircle } from "lucide-react";
+import { Send, Sparkles, Loader2, Crown, AlertCircle, Info } from "lucide-react";
 import ProtectedRoute from "./ProtectedRoute";
 import { useToast } from "@/hooks/use-toast";
 import { getMentorMessageCount, canSendMentorMessage, getUserPlan, getPlanLimits } from "@/lib/subscription";
 import { useNavigate } from "react-router-dom";
+import { analytics } from "@/lib/analytics";
+import { validateUserText, truncateText } from "@/lib/validation";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -64,22 +66,37 @@ const Mentor = () => {
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
-    // Check message limit
-    const canSend = await canSendMentorMessage(userId);
-    if (!canSend) {
+    // Validate message
+    const validation = validateUserText(input);
+    if (!validation.valid) {
       toast({
-        title: "Daily Limit Reached",
-        description: "You've reached your daily message limit. Upgrade to Premium for unlimited messaging.",
+        title: "Invalid Input",
+        description: validation.error,
         variant: "destructive",
       });
       return;
     }
 
-    const userMessage: Message = { role: "user", content: input };
+    // Check message limit
+    const canSend = await canSendMentorMessage(userId);
+    if (!canSend) {
+      toast({
+        title: "Daily Limit Reached",
+        description:
+          "You've reached your daily message limit. Upgrade to Premium for unlimited messaging.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const truncatedInput = truncateText(input);
+    const userMessage: Message = { role: "user", content: truncatedInput };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
     setMessageCount((prev) => prev + 1);
+
+    const startTime = Date.now();
 
     try {
       const { data, error } = await supabase.functions.invoke("mentor-chat", {
@@ -93,6 +110,16 @@ const Mentor = () => {
       });
 
       if (error) throw error;
+
+      const endTime = Date.now();
+      const tokensIn = truncatedInput.length / 4; // Rough estimate
+      const tokensOut = data.message ? data.message.length / 4 : 0;
+
+      // Track analytics
+      analytics.track("mentor_message", {
+        tokens_in: Math.round(tokensIn),
+        tokens_out: Math.round(tokensOut),
+      });
 
       // Check if tool call is required
       if (data.requiresAction) {
@@ -262,6 +289,7 @@ const Mentor = () => {
                 placeholder="Ask me anything..."
                 className="rounded-2xl"
                 disabled={loading}
+                maxLength={2000}
               />
               <Button 
                 onClick={handleSend} 
@@ -271,9 +299,17 @@ const Mentor = () => {
                 <Send className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-xs text-center text-muted-foreground mt-2">
-              I have context about your missions, recent reflections, and progress
-            </p>
+            <div className="max-w-4xl mx-auto mt-2 space-y-1">
+              <p className="text-xs text-center text-muted-foreground">
+                I have context about your missions, recent reflections, and progress
+              </p>
+              <Alert className="border-none bg-transparent p-2">
+                <Info className="h-3 w-3" />
+                <AlertDescription className="text-xs">
+                  <strong>Disclaimer:</strong> Horizon is an AI assistant for personal growth and is not a substitute for professional medical, mental health, or crisis services. If you're experiencing a crisis, please contact a qualified professional or emergency services.
+                </AlertDescription>
+              </Alert>
+            </div>
           </div>
         </div>
       </div>

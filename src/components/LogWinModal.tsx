@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAndAwardBadges, checkFirstLevelUpBadge } from "@/lib/badges";
+import { analytics } from "@/lib/analytics";
+import { validateUserText, truncateText } from "@/lib/validation";
 import {
   Dialog,
   DialogContent,
@@ -53,26 +55,40 @@ export const LogWinModal = ({ open, onOpenChange, missions, userId, onSuccess }:
       return;
     }
 
+    // Validate note if provided
+    if (note) {
+      const validation = validateUserText(note);
+      if (!validation.valid) {
+        toast({
+          title: "Invalid Input",
+          description: validation.error,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const xpAwarded = 10;
+      const truncatedNote = note ? truncateText(note, 500) : "";
 
       // Create check-in
-      const { error: checkinError } = await supabase
-        .from('checkins')
-        .insert([{
+      const { error: checkinError } = await supabase.from("checkins").insert([
+        {
           user_id: userId,
           mission_id: selectedMissionId,
           xp_awarded: xpAwarded,
-        }]);
+        },
+      ]);
 
       if (checkinError) throw checkinError;
 
       // Get current mission data
       const { data: mission, error: missionError } = await supabase
-        .from('missions')
-        .select('id, title, xp, level')
-        .eq('id', selectedMissionId)
+        .from("missions")
+        .select("id, title, xp, level, type")
+        .eq("id", selectedMissionId)
         .single();
 
       if (missionError) throw missionError;
@@ -85,14 +101,20 @@ export const LogWinModal = ({ open, onOpenChange, missions, userId, onSuccess }:
 
       // Update mission with new XP and level
       const { error: updateError } = await supabase
-        .from('missions')
+        .from("missions")
         .update({
           xp: newXp,
           level: newLevel,
         })
-        .eq('id', selectedMissionId);
+        .eq("id", selectedMissionId);
 
       if (updateError) throw updateError;
+
+      // Track analytics
+      analytics.track("checkin_logged", {
+        mission_type: mission.type,
+        xp_awarded: xpAwarded,
+      });
 
       // Check if leveled up
       if (leveledUp) {
@@ -100,7 +122,13 @@ export const LogWinModal = ({ open, onOpenChange, missions, userId, onSuccess }:
           title: "🚀 Level Up!",
           description: `${mission.title} Lv.${newLevel} — Momentum!`,
         });
-        
+
+        // Track level up
+        analytics.track("level_up", {
+          mission_type: mission.type,
+          new_level: newLevel,
+        });
+
         // Check for first level-up badge
         await checkFirstLevelUpBadge(userId, mission.id, mission.title, newLevel);
       } else {
@@ -118,7 +146,7 @@ export const LogWinModal = ({ open, onOpenChange, missions, userId, onSuccess }:
       onOpenChange(false);
       onSuccess();
     } catch (error: any) {
-      console.error('Error logging win:', error);
+      console.error("Error logging win:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to log win",
@@ -165,7 +193,9 @@ export const LogWinModal = ({ open, onOpenChange, missions, userId, onSuccess }:
               onChange={(e) => setNote(e.target.value)}
               className="rounded-xl"
               rows={3}
+              maxLength={500}
             />
+            <p className="text-xs text-muted-foreground text-right">{note.length}/500 characters</p>
           </div>
 
           <div className="flex gap-3">

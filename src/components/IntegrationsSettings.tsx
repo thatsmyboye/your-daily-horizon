@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { BookOpen, Activity, Calendar, ExternalLink } from "lucide-react";
+import { analytics } from "@/lib/analytics";
 
 interface Integration {
   id: string;
@@ -61,11 +62,10 @@ const integrations: Integration[] = [
 
 export const IntegrationsSettings = () => {
   const handleToggleClick = (integration: Integration) => {
-    // Log analytics event to track interest
-    console.log("[Analytics] Integration toggle clicked:", {
+    // Track analytics event
+    analytics.track("integration_interest", {
       integration_id: integration.id,
       integration_name: integration.name,
-      timestamp: new Date().toISOString(),
     });
 
     // Show toast notification
@@ -73,9 +73,6 @@ export const IntegrationsSettings = () => {
       title: "Coming Soon! 🚀",
       description: `${integration.name} integration is being developed. We've noted your interest!`,
     });
-
-    // In a real implementation, this would send to analytics service
-    // Example: analytics.track('integration_interest', { integration: integration.id })
   };
 
   return (

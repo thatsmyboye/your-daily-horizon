@@ -8,6 +8,8 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Smile, Loader2, Flame } from "lucide-react";
 import { motion } from "framer-motion";
+import { analytics } from "@/lib/analytics";
+import { validateUserText, truncateText } from "@/lib/validation";
 
 interface DailyPulseProps {
   userId: string;
@@ -127,13 +129,26 @@ export const DailyPulse = ({ userId }: DailyPulseProps) => {
   };
 
   const completePulse = async () => {
+    // Validate reflections
+    const validation = validateUserText(reflections);
+    if (!validation.valid) {
+      toast({
+        title: "Invalid Input",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
+      const truncatedReflections = truncateText(reflections);
+
       const entryData = {
         user_id: userId,
         date: today,
         mood,
-        reflections,
+        reflections: truncatedReflections,
         ai_prompt: aiPrompt,
         ai_suggestion: aiSuggestion,
         completed: true,
@@ -165,6 +180,12 @@ export const DailyPulse = ({ userId }: DailyPulseProps) => {
       toast({
         title: "Pulse Complete!",
         description: "Your daily reflection has been saved.",
+      });
+
+      // Track analytics event
+      analytics.track("daily_pulse_completed", {
+        mood,
+        suggestion_type: aiSuggestion ? "ai_generated" : "none",
       });
 
       // Check for streak badges
@@ -250,7 +271,11 @@ export const DailyPulse = ({ userId }: DailyPulseProps) => {
               onChange={(e) => setReflections(e.target.value)}
               className="rounded-xl min-h-24"
               disabled={hasCompletedToday}
+              maxLength={2000}
             />
+            <p className="text-xs text-muted-foreground text-right">
+              {reflections.length}/2000 characters
+            </p>
           </div>
 
           {/* AI Suggestion */}

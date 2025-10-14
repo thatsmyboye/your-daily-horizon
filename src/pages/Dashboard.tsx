@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { DailyPulse } from "@/components/DailyPulse";
 import { ProgressMap } from "@/components/ProgressMap";
 import { toast } from "@/hooks/use-toast";
+import { analytics } from "@/lib/analytics";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -40,10 +41,16 @@ const Dashboard = () => {
         link.click();
         document.body.removeChild(link);
 
-        toast({
-          title: "Card Generated! 🎉",
-          description: "Your weekly summary has been downloaded.",
-        });
+    toast({
+      title: "Card Generated! 🎉",
+      description: "Your weekly summary has been downloaded.",
+    });
+
+    // Track analytics
+    analytics.track("share_card_generated", {
+      streak: data.streak || 0,
+      completions: data.completions || 0,
+    });
       }
     } catch (error: any) {
       console.error("Error generating share card:", error);
