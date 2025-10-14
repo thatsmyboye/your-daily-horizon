@@ -158,6 +158,33 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_credentials: {
+        Row: {
+          created_at: string | null
+          id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -165,8 +192,6 @@ export type Database = {
           created_at: string | null
           display_name: string | null
           id: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
           subscription_plan: string | null
           timezone: string | null
         }
@@ -176,8 +201,6 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           id: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           subscription_plan?: string | null
           timezone?: string | null
         }
@@ -187,8 +210,6 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           id?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
           subscription_plan?: string | null
           timezone?: string | null
         }

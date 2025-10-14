@@ -84,12 +84,17 @@ serve(async (req) => {
       // Update profile with premium plan
       await supabaseClient
         .from("profiles")
-        .update({
-          subscription_plan: "premium",
+        .update({ subscription_plan: "premium" })
+        .eq("id", user.id);
+
+      // Store payment credentials in separate secure table (service role access only)
+      await supabaseClient
+        .from("payment_credentials")
+        .upsert({
+          user_id: user.id,
           stripe_customer_id: customerId,
           stripe_subscription_id: subscription.id,
-        })
-        .eq("id", user.id);
+        });
     } else {
       logStep("No active subscription found");
       await supabaseClient
