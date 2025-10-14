@@ -13,14 +13,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Brain, Dumbbell, Wrench, Heart, DollarSign, Sparkles, Plus } from "lucide-react";
 
 type MissionType = 'Mind' | 'Body' | 'Craft' | 'Relationships' | 'Finance' | 'Spirit' | 'Custom';
-type MotivationStyle = 'Warm' | 'Direct' | 'Playful';
+type CoachTone = 'Warm' | 'Direct' | 'Playful';
 
 interface ProposedMission {
   title: string;
   type: MissionType;
   cadence: string;
   target_per_week: number;
-  why: string;
+  intent: string;
 }
 
 const Onboarding = () => {
@@ -39,10 +39,10 @@ const Onboarding = () => {
   const [minutesPerDay, setMinutesPerDay] = useState(15);
   
   // Step 4: Days available
-  const [daysAvailable, setDaysAvailable] = useState<string[]>([]);
+  const [daysPerWeek, setDaysPerWeek] = useState<string[]>([]);
   
-  // Step 5: Motivation style
-  const [motivationStyle, setMotivationStyle] = useState<MotivationStyle | null>(null);
+  // Step 5: Coach tone
+  const [coachTone, setCoachTone] = useState<CoachTone | null>(null);
   
   // Mission proposals
   const [proposedMissions, setProposedMissions] = useState<ProposedMission[]>([]);
@@ -63,7 +63,7 @@ const Onboarding = () => {
 
   const weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-  const motivationStyles: { value: MotivationStyle; description: string }[] = [
+  const coachTones: { value: CoachTone; description: string }[] = [
     { value: 'Warm', description: 'Supportive and encouraging' },
     { value: 'Direct', description: 'Honest and challenging' },
     { value: 'Playful', description: 'Fun and lighthearted' },
@@ -78,10 +78,10 @@ const Onboarding = () => {
   };
 
   const toggleDay = (day: string) => {
-    if (daysAvailable.includes(day)) {
-      setDaysAvailable(daysAvailable.filter(d => d !== day));
+    if (daysPerWeek.includes(day)) {
+      setDaysPerWeek(daysPerWeek.filter(d => d !== day));
     } else {
-      setDaysAvailable([...daysAvailable, day]);
+      setDaysPerWeek([...daysPerWeek, day]);
     }
   };
 
@@ -94,9 +94,9 @@ const Onboarding = () => {
       case 3:
         return minutesPerDay > 0;
       case 4:
-        return daysAvailable.length > 0;
+        return daysPerWeek.length > 0;
       case 5:
-        return motivationStyle !== null;
+        return coachTone !== null;
       default:
         return false;
     }
@@ -117,10 +117,10 @@ const Onboarding = () => {
       const { data, error } = await supabase.functions.invoke('propose-missions', {
         body: {
           focusAreas,
-          intent,
+          whyNow: intent,
           minutesPerDay,
-          daysAvailable,
-          motivationStyle,
+          daysPerWeek,
+          coachTone,
         }
       });
 
@@ -155,7 +155,7 @@ const Onboarding = () => {
         user_id: user.id,
         title: m.title,
         type: m.type,
-        intent: m.why,
+        intent: m.intent,
         cadence: m.cadence,
         target_per_week: m.target_per_week,
         active: true,
@@ -251,8 +251,8 @@ const Onboarding = () => {
                     <div className="space-y-2">
                       <Label>Why it matters</Label>
                       <Textarea
-                        value={mission.why}
-                        onChange={(e) => updateMission(index, 'why', e.target.value)}
+                        value={mission.intent}
+                        onChange={(e) => updateMission(index, 'intent', e.target.value)}
                         className="rounded-xl"
                         rows={2}
                       />
@@ -392,7 +392,7 @@ const Onboarding = () => {
                   <div key={day} className="flex items-center space-x-2">
                     <Checkbox
                       id={day}
-                      checked={daysAvailable.includes(day)}
+                      checked={daysPerWeek.includes(day)}
                       onCheckedChange={() => toggleDay(day)}
                     />
                     <label
@@ -408,12 +408,12 @@ const Onboarding = () => {
 
             {step === 5 && (
               <div className="space-y-4">
-                {motivationStyles.map((style) => (
+                {coachTones.map((style) => (
                   <Button
                     key={style.value}
-                    variant={motivationStyle === style.value ? "default" : "outline"}
+                    variant={coachTone === style.value ? "default" : "outline"}
                     className="w-full h-auto p-4 rounded-xl justify-start"
-                    onClick={() => setMotivationStyle(style.value)}
+                    onClick={() => setCoachTone(style.value)}
                   >
                     <div className="text-left">
                       <div className="font-semibold mb-1">{style.value}</div>

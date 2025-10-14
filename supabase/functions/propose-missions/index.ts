@@ -12,40 +12,41 @@ serve(async (req) => {
   }
 
   try {
-    const { focusAreas, intent, minutesPerDay, daysAvailable, motivationStyle } = await req.json();
+    const { focusAreas, whyNow, minutesPerDay, daysPerWeek, coachTone } = await req.json();
 
-    console.log("Propose missions request:", { focusAreas, intent, minutesPerDay, daysAvailable, motivationStyle });
+    console.log("Propose missions request:", { focusAreas, whyNow, minutesPerDay, daysPerWeek, coachTone });
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `You are a life coach helping users create meaningful missions for personal growth. 
-Based on their chosen focus areas, intent, available time, and preferred coaching style, propose 3 specific, actionable missions.
+    const systemPrompt = `You are Horizon, an AI life mentor. You are supportive, concise, pragmatic, and bias toward smallest-viable actions. You ground suggestions in the user's missions, cadence, and recent mood trends. Limit output to useful, specific steps. Avoid therapy claims.
+
+Based on their chosen focus areas, intent, available time, and preferred coaching tone, propose 3 specific, actionable missions.
 
 Guidelines:
 - Each mission should be concrete and measurable
-- Match the user's motivation style (${motivationStyle})
+- Match the user's coach tone: ${coachTone}
 - Consider their time constraint (${minutesPerDay} minutes/day)
-- Align with their intent: ${intent}
+- Align with their intent: ${whyNow}
 - Focus areas: ${focusAreas.join(', ')}
 
 Return missions that feel personal and achievable.`;
 
     const userPrompt = `Create 3 missions for someone who:
 - Wants to focus on: ${focusAreas.join(', ')}
-- Their why: ${intent}
+- Their why: ${whyNow}
 - Has ${minutesPerDay} minutes per day
-- Available days: ${daysAvailable.join(', ')}
-- Prefers ${motivationStyle} coaching style
+- Available days: ${daysPerWeek.join(', ')}
+- Prefers ${coachTone} coaching tone
 
 For each mission, provide:
 1. A clear, actionable title
 2. The mission type (one of: ${focusAreas.join(', ')})
 3. Recommended cadence (e.g., "daily", "3x/week", "weekdays")
 4. Target completions per week (1-7)
-5. A compelling one-sentence reason why this matters`;
+5. A compelling one-sentence intent explaining why this mission matters`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -85,9 +86,9 @@ For each mission, provide:
                         minimum: 1,
                         maximum: 7
                       },
-                      why: { type: 'string', description: 'One-sentence compelling reason' }
+                      intent: { type: 'string', description: 'One-sentence explaining why this mission matters' }
                     },
-                    required: ['title', 'type', 'cadence', 'target_per_week', 'why']
+                    required: ['title', 'type', 'cadence', 'target_per_week', 'intent']
                   },
                   minItems: 3,
                   maxItems: 3

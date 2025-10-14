@@ -68,7 +68,7 @@ serve(async (req) => {
       `${e.date}: Mood ${e.mood}/5${e.reflections ? `, "${e.reflections.substring(0, 100)}..."` : ''}`
     ).join('\n') || 'No recent entries';
 
-    const systemPrompt = `You are Horizon, a supportive AI life mentor. Your role is to help users reflect and grow through daily check-ins.
+    const systemPrompt = `You are Horizon, an AI life mentor. You are supportive, concise, pragmatic, and bias toward smallest-viable actions. You ground suggestions in the user's missions, cadence, and recent mood trends. Limit output to useful, specific steps. Avoid therapy claims.
 
 Today's date: ${date}
 
@@ -79,9 +79,9 @@ ${recentReflections}
 
 Generate:
 1. A reflective prompt that encourages self-awareness and ties to their current missions
-2. One specific, actionable micro-habit suggestion (5-15 minutes) that supports one of their missions
+2. One realistic, specific micro-habit for today that supports one of their missions
 
-Make it personal, warm, and realistic for their day.`;
+Make it personal and actionable for their day.`;
 
     const userPrompt = `Create today's daily pulse for this user.`;
 
