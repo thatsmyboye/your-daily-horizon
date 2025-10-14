@@ -11,6 +11,15 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Disable in production
+  const isProduction = Deno.env.get("ENVIRONMENT") === "production";
+  if (isProduction) {
+    return new Response(
+      JSON.stringify({ error: "This endpoint is disabled in production" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   const supabaseClient = createClient(
     Deno.env.get("SUPABASE_URL") ?? "",
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",

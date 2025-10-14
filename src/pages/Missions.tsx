@@ -5,7 +5,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Target, Plus, Crown, AlertCircle } from "lucide-react";
-import ProtectedRoute from "./ProtectedRoute";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserPlan, getPlanLimits } from "@/lib/subscription";
 import { useNavigate } from "react-router-dom";
@@ -48,8 +47,7 @@ const Missions = () => {
   const isNearLimit = plan === "free" && missions.length >= limits.maxMissions - 1;
 
   return (
-    <ProtectedRoute>
-      <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -150,7 +148,6 @@ const Missions = () => {
           </div>
         )}
       </div>
-    </ProtectedRoute>
   );
 };
 

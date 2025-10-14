@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Sparkles, Loader2, Crown, AlertCircle, Info } from "lucide-react";
-import ProtectedRoute from "./ProtectedRoute";
 import { useToast } from "@/hooks/use-toast";
 import { getMentorMessageCount, canSendMentorMessage, getUserPlan, getPlanLimits } from "@/lib/subscription";
 import { useNavigate } from "react-router-dom";
@@ -183,7 +182,6 @@ const Mentor = () => {
   };
 
   return (
-    <ProtectedRoute>
       <div className="h-[calc(100vh-4rem)] flex">
         {/* Main content area */}
         <div className="flex-1 flex flex-col bg-gradient-subtle">
@@ -311,7 +309,6 @@ const Mentor = () => {
           </div>
         </div>
       </div>
-    </ProtectedRoute>
   );
 };
 
