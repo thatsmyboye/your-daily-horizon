@@ -38,11 +38,17 @@ const Landing = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 pt-32 pb-20 relative" style={{
-      backgroundImage: `linear-gradient(rgba(var(--background-rgb, 255, 255, 255), 0.85), rgba(var(--background-rgb, 255, 255, 255), 0.85)), url(${heroBg})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    }}>
+      <section className="container mx-auto px-4 pt-32 pb-20 relative">
+        <div 
+          className="absolute inset-0 opacity-20 pointer-events-none"
+          style={{
+            backgroundImage: `url(${heroBg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)'
+          }}
+        />
         <motion.div initial={{
         opacity: 0,
         y: 20
