@@ -3,10 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Sparkles, Loader2 } from "lucide-react";
+import { Send, Sparkles, Loader2, Crown, AlertCircle } from "lucide-react";
 import ProtectedRoute from "./ProtectedRoute";
 import { useToast } from "@/hooks/use-toast";
+import { getMentorMessageCount, canSendMentorMessage, getUserPlan, getPlanLimits } from "@/lib/subscription";
+import { useNavigate } from "react-router-dom";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -15,24 +18,44 @@ interface Message {
 
 const Mentor = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [userId, setUserId] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
+  const [plan, setPlan] = useState<"free" | "premium">("free");
+  const [dailyLimit, setDailyLimit] = useState(40);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setUserId(user.id);
-        // Initial greeting
-        setMessages([{
-          role: 'assistant',
-          content: "Hi! I'm Horizon, your AI mentor. I'm here to help you reflect, grow, and stay on track. What's on your mind?"
-        }]);
-      }
-    });
+    loadUserData();
   }, []);
+
+  const loadUserData = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      setUserId(user.id);
+      setMessages([
+        {
+          role: "assistant",
+          content:
+            "Hi! I'm Horizon, your AI mentor. I'm here to help you reflect, grow, and stay on track. What's on your mind?",
+        },
+      ]);
+
+      const userPlan = await getUserPlan(user.id);
+      setPlan(userPlan);
+
+      const limits = getPlanLimits(userPlan);
+      setDailyLimit(limits.mentorMessagesPerDay);
+
+      const count = await getMentorMessageCount(user.id);
+      setMessageCount(count);
+    }
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -41,20 +64,32 @@ const Mentor = () => {
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
-    const userMessage: Message = { role: 'user', content: input };
-    setMessages(prev => [...prev, userMessage]);
+    // Check message limit
+    const canSend = await canSendMentorMessage(userId);
+    if (!canSend) {
+      toast({
+        title: "Daily Limit Reached",
+        description: "You've reached your daily message limit. Upgrade to Premium for unlimited messaging.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const userMessage: Message = { role: "user", content: input };
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
+    setMessageCount((prev) => prev + 1);
 
     try {
-      const { data, error } = await supabase.functions.invoke('mentor-chat', {
+      const { data, error } = await supabase.functions.invoke("mentor-chat", {
         body: {
           userId,
-          messages: [...messages, userMessage].map(m => ({
+          messages: [...messages, userMessage].map((m) => ({
             role: m.role,
-            content: m.content
-          }))
-        }
+            content: m.content,
+          })),
+        },
       });
 
       if (error) throw error;
@@ -65,48 +100,58 @@ const Mentor = () => {
         console.log("Tool call required:", toolCall);
 
         // Execute tool call
-        const toolResult = await supabase.functions.invoke('mentor-chat', {
+        const toolResult = await supabase.functions.invoke("mentor-chat", {
           body: {
             userId,
-            functionCall: toolCall
-          }
+            functionCall: toolCall,
+          },
         });
 
         if (toolResult.error) throw toolResult.error;
 
         // Show result to user
-        if (toolCall.name === 'saveMentorNote') {
+        if (toolCall.name === "saveMentorNote") {
           toast({
             title: "Note Saved",
             description: "I've saved that insight for our future conversations.",
           });
-          setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: "I've noted that down. It'll help me support you better going forward."
-          }]);
-        } else if (toolCall.name === 'suggestMicroHabits') {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: "I've noted that down. It'll help me support you better going forward.",
+            },
+          ]);
+        } else if (toolCall.name === "suggestMicroHabits") {
           const habits = toolResult.data.habits;
-          const habitsList = habits.map((h: string, i: number) => `${i + 1}. ${h}`).join('\n');
-          setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: `Here are 3 quick wins you can tackle today:\n\n${habitsList}\n\nPick one and give it a try!`
-          }]);
+          const habitsList = habits.map((h: string, i: number) => `${i + 1}. ${h}`).join("\n");
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: `Here are 3 quick wins you can tackle today:\n\n${habitsList}\n\nPick one and give it a try!`,
+            },
+          ]);
         }
       } else if (data.message) {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: data.message
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.message,
+          },
+        ]);
       }
     } catch (error: any) {
-      console.error('Error sending message:', error);
+      console.error("Error sending message:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to send message",
         variant: "destructive",
       });
       // Remove the user message on error
-      setMessages(prev => prev.slice(0, -1));
+      setMessages((prev) => prev.slice(0, -1));
+      setMessageCount((prev) => Math.max(0, prev - 1));
     } finally {
       setLoading(false);
     }
@@ -124,8 +169,37 @@ const Mentor = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-3xl font-bold mb-2">Mentor Chat</h1>
+              <div className="flex items-center justify-between mb-2">
+                <h1 className="text-3xl font-bold">Mentor Chat</h1>
+                {plan === "free" && (
+                  <div className="text-sm text-muted-foreground">
+                    {messageCount}/{dailyLimit} messages today
+                  </div>
+                )}
+              </div>
               <p className="text-muted-foreground">Get personalized guidance anytime</p>
+
+              {plan === "free" && messageCount >= dailyLimit * 0.8 && (
+                <Alert className="mt-4 border-primary/20 bg-primary/5">
+                  <AlertCircle className="h-4 w-4 text-primary" />
+                  <AlertDescription className="flex items-center justify-between">
+                    <span>
+                      {messageCount >= dailyLimit
+                        ? "You've reached your daily message limit."
+                        : "You're approaching your daily message limit."}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl ml-4"
+                      onClick={() => navigate("/app/settings?tab=billing")}
+                    >
+                      <Crown className="mr-2 h-3 w-3" />
+                      Upgrade
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
             </motion.div>
           </div>
 
