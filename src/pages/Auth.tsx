@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { z } from "zod";
+import appIcon from "@/assets/app-icon.png";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -119,7 +120,7 @@ const Auth = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl gradient-primary mx-auto mb-4" />
+          <img src={appIcon} alt="Horizon App Icon" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-3xl font-bold">Welcome to Horizon</h1>
           <p className="text-muted-foreground mt-2">
             Your journey to growth starts here
