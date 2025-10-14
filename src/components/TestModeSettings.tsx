@@ -19,6 +19,10 @@ export const TestModeSettings = () => {
     checkAdminStatus();
   }, []);
 
+  // SECURITY NOTE: This client-side check is for UX only (showing/hiding UI elements).
+  // All actual authorization enforcement happens server-side in the edge functions.
+  // Users cannot bypass security by modifying this code - the edge functions validate
+  // admin status by querying the user_roles table before executing any admin actions.
   const checkAdminStatus = async () => {
     setCheckingAdmin(true);
     const {
