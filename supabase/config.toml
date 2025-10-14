@@ -1,1 +1,4 @@
 project_id = "ftfrktbtkxgeitgwjzis"
+
+[functions.propose-missions]
+verify_jwt = true
