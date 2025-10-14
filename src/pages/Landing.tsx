@@ -61,7 +61,7 @@ const Landing = () => {
             <Button size="lg" onClick={() => navigate("/auth")} className="rounded-2xl">
               Start Your Journey
             </Button>
-            <Button size="lg" variant="outline" className="rounded-2xl">
+            <Button size="lg" variant="outline" onClick={() => navigate("/learn-more")} className="rounded-2xl">
               Learn More
             </Button>
           </div>

@@ -11,6 +11,7 @@ import Mentor from "./pages/Mentor";
 import Onboarding from "./pages/Onboarding";
 import Settings from "./pages/Settings";
 import DocsSetup from "./pages/DocsSetup";
+import LearnMore from "./pages/LearnMore";
 import ProtectedRoute from "./pages/ProtectedRoute";
 import NotFound from "./pages/NotFound";
 
@@ -46,6 +47,7 @@ const App = () => (
           } />
           <Route path="/settings" element={<Settings />} />
           <Route path="/docs/setup" element={<DocsSetup />} />
+          <Route path="/learn-more" element={<LearnMore />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
