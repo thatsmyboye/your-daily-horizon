@@ -8,20 +8,35 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AppLayout from "@/components/AppLayout";
 import { BillingSettings } from "@/components/BillingSettings";
 import { IntegrationsSettings } from "@/components/IntegrationsSettings";
+import { TestModeSettings } from "@/components/TestModeSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { getUserPlan } from "@/lib/subscription";
+import { isAdmin, isTestModeEnabled } from "@/lib/admin";
 
 const Settings = () => {
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
   const [plan, setPlan] = useState<"free" | "premium">("free");
   const [userId, setUserId] = useState<string>("");
+  const [showTestMode, setShowTestMode] = useState(false);
 
   useEffect(() => {
     loadProfile();
+    checkTestMode();
   }, []);
+
+  const checkTestMode = async () => {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      const userIsAdmin = await isAdmin(user.id);
+      const testModeEnabled = isTestModeEnabled();
+      setShowTestMode(userIsAdmin || testModeEnabled);
+    }
+  };
 
   const loadProfile = async () => {
     const {
@@ -99,6 +114,11 @@ const Settings = () => {
             <TabsTrigger value="billing" className="rounded-lg">
               Billing
             </TabsTrigger>
+            {showTestMode && (
+              <TabsTrigger value="test-mode" className="rounded-lg">
+                Test Mode
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="profile">
@@ -204,6 +224,12 @@ const Settings = () => {
           <TabsContent value="billing">
             <BillingSettings />
           </TabsContent>
+
+          {showTestMode && (
+            <TabsContent value="test-mode">
+              <TestModeSettings />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </AppLayout>

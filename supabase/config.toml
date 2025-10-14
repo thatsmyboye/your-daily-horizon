@@ -20,3 +20,9 @@ verify_jwt = true
 
 [functions.customer-portal]
 verify_jwt = true
+
+[functions.seed-demo-data]
+verify_jwt = true
+
+[functions.reset-demo-data]
+verify_jwt = true
