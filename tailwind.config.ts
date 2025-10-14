@@ -80,6 +80,15 @@ export default {
           danger: "hsl(var(--destructive))",
           muted: "hsl(var(--muted))",
         },
+        mission: {
+          mind: "hsl(var(--mission-mind))",
+          body: "hsl(var(--mission-body))",
+          craft: "hsl(var(--mission-craft))",
+          relationships: "hsl(var(--mission-relationships))",
+          finance: "hsl(var(--mission-finance))",
+          spirit: "hsl(var(--mission-spirit))",
+          custom: "hsl(var(--mission-custom))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

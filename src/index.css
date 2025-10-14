@@ -55,6 +55,15 @@ All colors MUST be HSL.
     --mood-neutral: 227 100% 78%;
     --mood-low: 0 0% 62%;
 
+    /* Mission type colors */
+    --mission-mind: 227 100% 78%;
+    --mission-body: 131 54% 64%;
+    --mission-craft: 30 100% 64%;
+    --mission-relationships: 0 73% 72%;
+    --mission-finance: 252 72% 77%;
+    --mission-spirit: 48 92% 51%;
+    --mission-custom: 0 0% 60%;
+
     /* Custom shadows */
     --shadow-soft: 0 2px 8px -2px hsl(11 100% 69% / 0.1);
     --shadow-medium: 0 8px 24px -8px hsl(11 100% 69% / 0.15);
@@ -110,6 +119,15 @@ All colors MUST be HSL.
     --mood-happy: 30 100% 64%;
     --mood-neutral: 227 100% 78%;
     --mood-low: 0 0% 62%;
+
+    /* Mission type colors (dark mode) */
+    --mission-mind: 227 100% 78%;
+    --mission-body: 131 54% 64%;
+    --mission-craft: 30 100% 64%;
+    --mission-relationships: 0 73% 72%;
+    --mission-finance: 252 72% 77%;
+    --mission-spirit: 48 92% 51%;
+    --mission-custom: 0 0% 60%;
 
     /* Custom shadows for dark mode */
     --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
