@@ -3,9 +3,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Target, TrendingUp, MessageCircle } from "lucide-react";
+import { Target, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DailyPulse } from "@/components/DailyPulse";
+import { ProgressMap } from "@/components/ProgressMap";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -34,39 +35,17 @@ const Dashboard = () => {
 
       {/* Grid of sections */}
       <div className="grid md:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="rounded-2xl shadow-soft">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Today's Missions
-              </CardTitle>
-              <CardDescription>3 tasks to complete</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-                <div className="w-2 h-2 rounded-full bg-primary" />
-                <span className="flex-1">Morning meditation</span>
-                <span className="text-xs text-muted-foreground">10 min</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-                <div className="w-2 h-2 rounded-full bg-secondary" />
-                <span className="flex-1">Journal about gratitude</span>
-                <span className="text-xs text-muted-foreground">5 min</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-xl">
-                <div className="w-2 h-2 rounded-full bg-accent" />
-                <span className="flex-1">Review weekly goals</span>
-                <span className="text-xs text-muted-foreground">15 min</span>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
+        {/* Progress Map */}
+        {userId && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <ProgressMap userId={userId} />
+          </motion.div>
+        )}
+        {/* Today's Missions Preview */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -75,32 +54,19 @@ const Dashboard = () => {
           <Card className="rounded-2xl shadow-soft">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Progress This Week
+                <Target className="h-5 w-5" />
+                Today's Missions
               </CardTitle>
-              <CardDescription>You're on a 7-day streak!</CardDescription>
+              <CardDescription>Quick access to your active missions</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm">Daily Check-ins</span>
-                    <span className="text-sm font-medium">7/7</span>
-                  </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full w-full gradient-primary" />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm">Mission Completion</span>
-                    <span className="text-sm font-medium">18/21</span>
-                  </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div className="h-full w-[85%] gradient-warm" />
-                  </div>
-                </div>
-              </div>
+              <Button
+                variant="outline"
+                className="w-full rounded-xl"
+                onClick={() => navigate("/app/missions")}
+              >
+                View All Missions
+              </Button>
             </CardContent>
           </Card>
         </motion.div>
