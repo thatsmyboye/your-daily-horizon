@@ -39,12 +39,12 @@ const Landing = () => {
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 pt-32 pb-20 relative">
-        <div 
-          className="absolute inset-0 opacity-20 pointer-events-none"
+        <img
+          src={heroBg}
+          alt=""
+          fetchPriority="high"
+          className="absolute inset-0 w-full h-full object-cover opacity-20 pointer-events-none"
           style={{
-            backgroundImage: `url(${heroBg})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
             maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)',
             WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0) 100%)'
           }}
