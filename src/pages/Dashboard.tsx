@@ -1,11 +1,21 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Smile, Target, TrendingUp, MessageCircle } from "lucide-react";
+import { Target, TrendingUp, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { DailyPulse } from "@/components/DailyPulse";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState<string>("");
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setUserId(user.id);
+    });
+  }, []);
 
   return (
     <div className="p-6 space-y-6">
@@ -20,34 +30,7 @@ const Dashboard = () => {
       </motion.div>
 
       {/* Daily Pulse */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        <Card className="rounded-2xl shadow-soft">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Smile className="h-5 w-5" />
-              Daily Pulse
-            </CardTitle>
-            <CardDescription>How are you feeling today?</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-5 gap-3">
-              {["😊", "😐", "😔", "😤", "😴"].map((emoji, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  className="h-16 text-2xl rounded-xl hover:scale-105 transition-transform"
-                >
-                  {emoji}
-                </Button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
+      {userId && <DailyPulse userId={userId} />}
 
       {/* Grid of sections */}
       <div className="grid md:grid-cols-2 gap-6">

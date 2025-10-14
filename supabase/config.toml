@@ -2,3 +2,6 @@ project_id = "ftfrktbtkxgeitgwjzis"
 
 [functions.propose-missions]
 verify_jwt = true
+
+[functions.generate-daily-pulse]
+verify_jwt = true
