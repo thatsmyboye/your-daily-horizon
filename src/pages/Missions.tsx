@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Dumbbell, Brain, MessagesSquare, Sparkles, BookOpen, Wallet, Home, Eraser, Feather } from "lucide-react";
+import { Dumbbell, Brain, MessagesSquare, Sparkles, BookOpen, Wallet, Home, RefreshCw, Feather } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 
@@ -27,7 +27,7 @@ type Mission = {
 
 const bucketIcon: Record<Bucket, any> = {
   Body: Dumbbell, Mind: Brain, Connect: MessagesSquare, Create: Sparkles,
-  Learn: BookOpen, Earn: Wallet, Home: Home, Reset: Eraser, Reflect: Feather
+  Learn: BookOpen, Earn: Wallet, Home: Home, Reset: RefreshCw, Reflect: Feather
 };
 
 export default function Missions() {
