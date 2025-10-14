@@ -44,7 +44,7 @@ const Mentor = () => {
         {
           role: "assistant",
           content:
-            "Hi! I'm Horizon, your AI mentor. I'm here to help you reflect, grow, and stay on track. What's on your mind?",
+            "Pick the smallest possible step—then go smaller.",
         },
       ]);
 

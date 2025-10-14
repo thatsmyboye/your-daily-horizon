@@ -124,6 +124,15 @@ export const ProgressMap = ({ userId }: ProgressMapProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Empty State */}
+          {missions.length === 0 ? (
+            <div className="w-full aspect-square bg-gradient-subtle rounded-2xl flex items-center justify-center p-8">
+              <p className="text-center text-muted-foreground text-sm max-w-xs">
+                Every action plants a star. Start with one small win today.
+              </p>
+            </div>
+          ) : (
+            <>
           {/* SVG Visualization */}
           <div className="w-full aspect-square bg-gradient-subtle rounded-2xl overflow-hidden">
             <svg viewBox="0 0 400 400" className="w-full h-full">
@@ -260,6 +269,8 @@ export const ProgressMap = ({ userId }: ProgressMapProps) => {
             <Plus className="mr-2 h-4 w-4" />
             Log a Quick Win
           </Button>
+          </>
+          )}
         </CardContent>
       </Card>
 

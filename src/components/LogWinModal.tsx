@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkAndAwardBadges, checkFirstLevelUpBadge } from "@/lib/badges";
 import { analytics } from "@/lib/analytics";
 import { validateUserText, truncateText } from "@/lib/validation";
+import confetti from "canvas-confetti";
 import {
   Dialog,
   DialogContent,
@@ -118,9 +119,21 @@ export const LogWinModal = ({ open, onOpenChange, missions, userId, onSuccess }:
 
       // Check if leveled up
       if (leveledUp) {
+        // Trigger subtle confetti only on first level-up (1 -> 2)
+        if (newLevel === 2) {
+          confetti({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.6 },
+            colors: ['hsl(var(--primary))', 'hsl(var(--accent))'],
+            ticks: 100,
+            gravity: 0.8,
+          });
+        }
+
         toast({
-          title: "🚀 Level Up!",
-          description: `${mission.title} Lv.${newLevel} — Momentum!`,
+          title: "Level Up",
+          description: `You're evolving your ${mission.title} identity. Keep momentum.`,
         });
 
         // Track level up

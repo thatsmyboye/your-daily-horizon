@@ -11,11 +11,11 @@ export type Badge = {
 const BADGE_DEFINITIONS = {
   "streak-7": {
     name: "Week Warrior",
-    description: "7-day streak!",
+    description: "Seven days of showing up. That's a pattern.",
   },
   "checkins-30": {
     name: "Consistency Champion",
-    description: "30 check-ins completed!",
+    description: "Thirty actions logged. Momentum builds on itself.",
   },
 } as const;
 
