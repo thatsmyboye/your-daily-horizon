@@ -1,154 +1,205 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useEffect, useMemo, useState } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
-import { Target, Plus, Crown, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Dumbbell, Brain, MessagesSquare, Sparkles, BookOpen, Wallet, Home, Eraser, Feather } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getUserPlan, getPlanLimits } from "@/lib/subscription";
-import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
-const Missions = () => {
-  const navigate = useNavigate();
-  const [missions, setMissions] = useState<any[]>([]);
+type Bucket = 'Body'|'Mind'|'Connect'|'Create'|'Learn'|'Earn'|'Home'|'Reset'|'Reflect';
+type Cadence = 'daily'|'weekly'|'monthly'|'seasonal';
+type Size = 'S'|'M'|'L';
+
+type Mission = {
+  id: string;
+  title: string;
+  bucket: Bucket;
+  size: Size;
+  cadence: Cadence;
+  xp: number;
+  coins: number;
+  instructions?: string;
+  status?: 'available'|'completed'|'claimed';
+  instance_id?: string;
+};
+
+const bucketIcon: Record<Bucket, any> = {
+  Body: Dumbbell, Mind: Brain, Connect: MessagesSquare, Create: Sparkles,
+  Learn: BookOpen, Earn: Wallet, Home: Home, Reset: Eraser, Reflect: Feather
+};
+
+export default function Missions() {
+  const [tab, setTab] = useState<Cadence>('daily');
+  const [items, setItems] = useState<Mission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [plan, setPlan] = useState<"free" | "premium">("free");
-  const [userId, setUserId] = useState<string>("");
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadMissions();
+  }, [tab]);
 
-  const loadData = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const loadMissions = async () => {
+    setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    setUserId(user.id);
+    // Roll instances for current period
+    await supabase.functions.invoke('roll-mission-instances', {
+      body: { cadence: tab }
+    });
 
-    const userPlan = await getUserPlan(user.id);
-    setPlan(userPlan);
+    // Fetch mission instances
+    const { data: instances } = await supabase
+      .from('mission_instances')
+      .select(`
+        id,
+        status,
+        completed_at,
+        missions (
+          id,
+          title,
+          bucket,
+          size,
+          cadence,
+          xp,
+          coins,
+          instructions
+        )
+      `)
+      .eq('user_id', user.id)
+      .eq('missions.cadence', tab)
+      .limit(5);
 
-    const { data: missionsData } = await supabase
-      .from("missions")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("active", true)
-      .order("created_at", { ascending: false });
-
-    setMissions(missionsData || []);
+    if (instances) {
+      const mapped = instances.map((inst: any) => ({
+        ...inst.missions,
+        status: inst.status,
+        instance_id: inst.id
+      }));
+      setItems(mapped);
+    }
     setLoading(false);
   };
 
-  const limits = getPlanLimits(plan);
-  const canAddMission = plan === "premium" || missions.length < limits.maxMissions;
-  const isNearLimit = plan === "free" && missions.length >= limits.maxMissions - 1;
+  const onComplete = async (m: Mission) => {
+    if (!m.instance_id) return;
+    
+    const { error } = await supabase
+      .from('mission_instances')
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
+      .eq('id', m.instance_id);
+
+    if (error) {
+      toast.error("Failed to mark complete");
+      return;
+    }
+
+    setItems(prev => prev.map(x => x.id === m.id ? {...x, status: 'completed'} : x));
+    toast.success(`Completed: ${m.title}`);
+  };
+
+  const onClaim = async (m: Mission) => {
+    if (!m.instance_id) return;
+
+    const { error } = await supabase.functions.invoke('claim-mission-rewards', {
+      body: { instance_id: m.instance_id }
+    });
+
+    if (error) {
+      toast.error("Failed to claim rewards");
+      return;
+    }
+
+    setItems(prev => prev.map(x => x.id === m.id ? {...x, status: 'claimed'} : x));
+    toast.success(`Claimed! +${m.xp} XP · +${m.coins} HC`);
+  };
+
+  const headerCopy = useMemo(() => ({
+    daily: 'Small wins, today.',
+    weekly: 'Build your week.',
+    monthly: 'Shape the month.',
+    seasonal: 'Bigger arcs, new seasons.'
+  } as Record<Cadence, string>), []);
 
   return (
-    <div className="p-6 space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl font-bold">Your Missions</h1>
-            <div className="flex items-center gap-2">
-              {plan === "free" && (
-                <span className="text-sm text-muted-foreground">
-                  {missions.length}/{limits.maxMissions} missions
-                </span>
-              )}
-              <Button
-                onClick={() => navigate("/app/onboarding")}
-                className="rounded-xl"
-                disabled={!canAddMission}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Mission
-              </Button>
-            </div>
-          </div>
-          <p className="text-muted-foreground">Track your growth journey</p>
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-6"
+      >
+        <h1 className="text-3xl font-bold tracking-tight">Missions</h1>
+        <p className="text-muted-foreground">{headerCopy[tab]}</p>
+      </motion.div>
 
-          {isNearLimit && (
-            <Alert className="mt-4 border-primary/20 bg-primary/5">
-              <AlertCircle className="h-4 w-4 text-primary" />
-              <AlertDescription className="flex items-center justify-between">
-                <span>
-                  You're at your mission limit. Upgrade to add unlimited missions.
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-xl ml-4"
-                  onClick={() => navigate("/app/settings?tab=billing")}
-                >
-                  <Crown className="mr-2 h-3 w-3" />
-                  Upgrade
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
-        </motion.div>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Cadence)} className="w-full">
+        <TabsList className="grid w-full grid-cols-4 rounded-xl">
+          <TabsTrigger value="daily">Daily</TabsTrigger>
+          <TabsTrigger value="weekly">Weekly</TabsTrigger>
+          <TabsTrigger value="monthly">Monthly</TabsTrigger>
+          <TabsTrigger value="seasonal">Seasonal</TabsTrigger>
+        </TabsList>
 
-        {loading ? (
-          <div className="text-center py-12 text-muted-foreground">Loading missions...</div>
-        ) : missions.length === 0 ? (
-          <Card className="rounded-2xl shadow-soft">
-            <CardContent className="p-12 text-center">
-              <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="font-semibold mb-2">No missions yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Create your first mission to start your growth journey
-              </p>
-              <Button onClick={() => navigate("/app/onboarding")} className="rounded-xl">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Mission
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {missions.map((mission, index) => (
-              <motion.div
-                key={mission.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Card className="rounded-2xl shadow-soft">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <Target className="h-6 w-6 text-primary mt-1" />
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="font-semibold">{mission.title}</h3>
-                            {mission.intent && (
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {mission.intent}
-                              </p>
-                            )}
+        {(['daily','weekly','monthly','seasonal'] as Cadence[]).map(k => (
+          <TabsContent key={k} value={k}>
+            {loading ? (
+              <div className="mt-6 text-center text-muted-foreground">Loading missions...</div>
+            ) : items.length === 0 ? (
+              <Card className="mt-6 rounded-2xl">
+                <CardHeader><CardTitle>No missions yet</CardTitle></CardHeader>
+                <CardContent className="text-muted-foreground">
+                  Pick a track and start small—momentum loves tiny wins.
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {items.map((m, index) => {
+                  const Icon = bucketIcon[m.bucket];
+                  return (
+                    <motion.div
+                      key={m.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <Card className="relative transition hover:shadow-lg rounded-2xl">
+                        <CardHeader className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-5 w-5" />
+                            <CardTitle className="text-lg">{m.title}</CardTitle>
                           </div>
-                          <Badge variant="outline">Level {mission.level}</Badge>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span>XP: {mission.xp}</span>
-                          <span>Target: {mission.target_per_week}/week</span>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
+                          <div className="flex gap-2 flex-wrap">
+                            <Badge variant="outline">{m.bucket}</Badge>
+                            <Badge variant="secondary">{m.size}</Badge>
+                            <Badge>{m.xp} XP</Badge>
+                            <Badge>{m.coins} HC</Badge>
+                          </div>
+                        </CardHeader>
+                        {m.instructions && (
+                          <CardContent className="text-sm text-muted-foreground">{m.instructions}</CardContent>
+                        )}
+                        <CardFooter className="flex gap-2">
+                          {m.status === 'available' && (
+                            <Button onClick={() => onComplete(m)} className="rounded-xl">Mark done</Button>
+                          )}
+                          {m.status === 'completed' && (
+                            <Button onClick={() => onClaim(m)} variant="secondary" className="rounded-xl">Claim rewards</Button>
+                          )}
+                          {m.status === 'claimed' && (
+                            <span className="text-sm text-green-600">✓ Claimed</span>
+                          )}
+                        </CardFooter>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+        ))}
+      </Tabs>
+    </div>
   );
-};
-
-export default Missions;
+}

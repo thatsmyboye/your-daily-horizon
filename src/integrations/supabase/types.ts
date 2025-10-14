@@ -14,48 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      checkins: {
-        Row: {
-          entry_id: string | null
-          id: string
-          mission_id: string
-          occurred_at: string | null
-          user_id: string
-          xp_awarded: number | null
-        }
-        Insert: {
-          entry_id?: string | null
-          id?: string
-          mission_id: string
-          occurred_at?: string | null
-          user_id: string
-          xp_awarded?: number | null
-        }
-        Update: {
-          entry_id?: string | null
-          id?: string
-          mission_id?: string
-          occurred_at?: string | null
-          user_id?: string
-          xp_awarded?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "checkins_entry_id_fkey"
-            columns: ["entry_id"]
-            isOneToOne: false
-            referencedRelation: "daily_entries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checkins_mission_id_fkey"
-            columns: ["mission_id"]
-            isOneToOne: false
-            referencedRelation: "missions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       daily_entries: {
         Row: {
           ai_prompt: string | null
@@ -116,45 +74,115 @@ export type Database = {
         }
         Relationships: []
       }
+      mission_completions: {
+        Row: {
+          coins_awarded: number
+          created_at: string | null
+          id: string
+          mission_instance_id: string | null
+          user_id: string
+          xp_awarded: number
+        }
+        Insert: {
+          coins_awarded: number
+          created_at?: string | null
+          id?: string
+          mission_instance_id?: string | null
+          user_id: string
+          xp_awarded: number
+        }
+        Update: {
+          coins_awarded?: number
+          created_at?: string | null
+          id?: string
+          mission_instance_id?: string | null
+          user_id?: string
+          xp_awarded?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_completions_mission_instance_id_fkey"
+            columns: ["mission_instance_id"]
+            isOneToOne: false
+            referencedRelation: "mission_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mission_instances: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          mission_id: string | null
+          period_id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          mission_id?: string | null
+          period_id: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          mission_id?: string | null
+          period_id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_instances_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       missions: {
         Row: {
           active: boolean | null
-          cadence: string | null
+          bucket: string | null
+          cadence: string
+          coins: number
           created_at: string | null
           id: string
-          intent: string | null
-          level: number | null
-          target_per_week: number | null
+          instructions: string | null
+          size: string | null
           title: string
-          type: Database["public"]["Enums"]["mission_type"]
-          user_id: string
-          xp: number | null
+          xp: number
         }
         Insert: {
           active?: boolean | null
-          cadence?: string | null
+          bucket?: string | null
+          cadence: string
+          coins: number
           created_at?: string | null
           id?: string
-          intent?: string | null
-          level?: number | null
-          target_per_week?: number | null
+          instructions?: string | null
+          size?: string | null
           title: string
-          type: Database["public"]["Enums"]["mission_type"]
-          user_id: string
-          xp?: number | null
+          xp: number
         }
         Update: {
           active?: boolean | null
-          cadence?: string | null
+          bucket?: string | null
+          cadence?: string
+          coins?: number
           created_at?: string | null
           id?: string
-          intent?: string | null
-          level?: number | null
-          target_per_week?: number | null
+          instructions?: string | null
+          size?: string | null
           title?: string
-          type?: Database["public"]["Enums"]["mission_type"]
-          user_id?: string
-          xp?: number | null
+          xp?: number
         }
         Relationships: []
       }
@@ -233,6 +261,42 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_stats: {
+        Row: {
+          coins_total: number | null
+          created_at: string | null
+          daily_streak: number | null
+          freeze_available: boolean | null
+          freeze_reset_date: string | null
+          last_daily_date: string | null
+          updated_at: string | null
+          user_id: string
+          xp_total: number | null
+        }
+        Insert: {
+          coins_total?: number | null
+          created_at?: string | null
+          daily_streak?: number | null
+          freeze_available?: boolean | null
+          freeze_reset_date?: string | null
+          last_daily_date?: string | null
+          updated_at?: string | null
+          user_id: string
+          xp_total?: number | null
+        }
+        Update: {
+          coins_total?: number | null
+          created_at?: string | null
+          daily_streak?: number | null
+          freeze_available?: boolean | null
+          freeze_reset_date?: string | null
+          last_daily_date?: string | null
+          updated_at?: string | null
+          user_id?: string
+          xp_total?: number | null
         }
         Relationships: []
       }

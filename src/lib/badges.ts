@@ -63,10 +63,10 @@ export const checkAndAwardBadges = async (userId: string) => {
     }
   }
 
-  // Check for 30 check-ins
+  // Check for 30 mission completions
   if (!earnedBadgeIds.includes("checkins-30")) {
     const { count } = await supabase
-      .from("checkins")
+      .from("mission_completions")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId);
 

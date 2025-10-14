@@ -3,25 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { motion } from "framer-motion";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { Brain, Dumbbell, Wrench, Heart, DollarSign, Sparkles, Plus } from "lucide-react";
 
 type MissionType = 'Mind' | 'Body' | 'Craft' | 'Relationships' | 'Finance' | 'Spirit' | 'Custom';
 type CoachTone = 'Warm' | 'Direct' | 'Playful';
-
-interface ProposedMission {
-  title: string;
-  type: MissionType;
-  cadence: string;
-  target_per_week: number;
-  intent: string;
-}
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -29,24 +19,11 @@ const Onboarding = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
-  // Step 1: Focus areas
   const [focusAreas, setFocusAreas] = useState<MissionType[]>([]);
-  
-  // Step 2: Intent
   const [intent, setIntent] = useState("");
-  
-  // Step 3: Time commitment
   const [minutesPerDay, setMinutesPerDay] = useState(15);
-  
-  // Step 4: Days available
   const [daysPerWeek, setDaysPerWeek] = useState<string[]>([]);
-  
-  // Step 5: Coach tone
   const [coachTone, setCoachTone] = useState<CoachTone | null>(null);
-  
-  // Mission proposals
-  const [proposedMissions, setProposedMissions] = useState<ProposedMission[]>([]);
-  const [editingMissions, setEditingMissions] = useState(false);
 
   const totalSteps = 5;
   const progress = (step / totalSteps) * 100;
@@ -106,184 +83,51 @@ const Onboarding = () => {
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
-      // Generate missions
-      await generateMissions();
+      await completeOnboarding();
     }
   };
 
-  const generateMissions = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('propose-missions', {
-        body: {
-          focusAreas,
-          whyNow: intent,
-          minutesPerDay,
-          daysPerWeek,
-          coachTone,
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.missions) {
-        setProposedMissions(data.missions);
-        setEditingMissions(true);
-      } else {
-        throw new Error('No missions returned');
-      }
-    } catch (error: any) {
-      console.error('Error generating missions:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to generate missions. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveMissions = async () => {
+  const completeOnboarding = async () => {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Save missions
-      const missionsToSave = proposedMissions.map(m => ({
-        user_id: user.id,
-        title: m.title,
-        type: m.type,
-        intent: m.intent,
-        cadence: m.cadence,
-        target_per_week: m.target_per_week,
-        active: true,
-      }));
-
-      const { error: missionsError } = await supabase
-        .from('missions')
-        .insert(missionsToSave);
-
-      if (missionsError) throw missionsError;
-
-      // Update or create profile with preferences
-      const { error: profileError } = await supabase
+      // Create profile
+      await supabase
         .from('profiles')
         .upsert({
           id: user.id,
           display_name: user.email?.split('@')[0] || 'User',
         });
 
-      if (profileError) throw profileError;
+      // Initialize user_stats
+      await supabase
+        .from('user_stats')
+        .upsert({
+          user_id: user.id,
+          xp_total: 0,
+          coins_total: 0,
+          daily_streak: 0,
+        });
 
       toast({
-        title: "Success!",
-        description: "Your missions have been created.",
+        title: "Welcome!",
+        description: "Your account is set up. Head to Missions to get started.",
       });
 
-      navigate('/app');
+      navigate('/app/missions');
     } catch (error: any) {
-      console.error('Error saving missions:', error);
+      console.error('Error completing onboarding:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to save missions.",
+        description: error.message || "Failed to complete setup.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
-
-  const updateMission = (index: number, field: keyof ProposedMission, value: any) => {
-    const updated = [...proposedMissions];
-    updated[index] = { ...updated[index], [field]: value };
-    setProposedMissions(updated);
-  };
-
-  if (editingMissions) {
-    return (
-      <div className="min-h-screen gradient-subtle flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-3xl"
-        >
-          <Card className="rounded-2xl shadow-medium">
-            <CardHeader>
-              <CardTitle>Your Personalized Missions</CardTitle>
-              <CardDescription>Review and edit your missions before starting</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {proposedMissions.map((mission, index) => (
-                <Card key={index} className="rounded-xl shadow-soft">
-                  <CardContent className="p-4 space-y-3">
-                    <div className="space-y-2">
-                      <Label>Mission Title</Label>
-                      <Input
-                        value={mission.title}
-                        onChange={(e) => updateMission(index, 'title', e.target.value)}
-                        className="rounded-xl"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-2">
-                        <Label>Cadence</Label>
-                        <Input
-                          value={mission.cadence}
-                          onChange={(e) => updateMission(index, 'cadence', e.target.value)}
-                          className="rounded-xl"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Times per week</Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          max="7"
-                          value={mission.target_per_week}
-                          onChange={(e) => updateMission(index, 'target_per_week', parseInt(e.target.value))}
-                          className="rounded-xl"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Why it matters</Label>
-                      <Textarea
-                        value={mission.intent}
-                        onChange={(e) => updateMission(index, 'intent', e.target.value)}
-                        className="rounded-xl"
-                        rows={2}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-
-              <div className="flex gap-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setEditingMissions(false)}
-                  className="rounded-xl flex-1"
-                  disabled={loading}
-                >
-                  Back
-                </Button>
-                <Button
-                  onClick={saveMissions}
-                  className="rounded-xl flex-1"
-                  disabled={loading}
-                >
-                  {loading ? "Saving..." : "Start My Journey"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen gradient-subtle flex items-center justify-center p-4">
@@ -357,17 +201,6 @@ const Onboarding = () => {
 
             {step === 3 && (
               <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <Input
-                    type="number"
-                    min="5"
-                    max="120"
-                    value={minutesPerDay}
-                    onChange={(e) => setMinutesPerDay(parseInt(e.target.value) || 0)}
-                    className="rounded-xl"
-                  />
-                  <span className="text-sm text-muted-foreground">minutes per day</span>
-                </div>
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     {[5, 10, 15, 30, 60].map((mins) => (
@@ -376,9 +209,9 @@ const Onboarding = () => {
                         size="sm"
                         variant={minutesPerDay === mins ? "default" : "outline"}
                         onClick={() => setMinutesPerDay(mins)}
-                        className="rounded-xl"
+                        className="rounded-xl flex-1"
                       >
-                        {mins}
+                        {mins} min
                       </Button>
                     ))}
                   </div>
@@ -440,7 +273,7 @@ const Onboarding = () => {
                 className="rounded-xl flex-1"
                 disabled={!canProceed() || loading}
               >
-                {loading ? "Generating..." : step === totalSteps ? "Generate Missions" : "Continue"}
+                {loading ? "Setting up..." : step === totalSteps ? "Get Started" : "Continue"}
               </Button>
             </div>
           </CardContent>
