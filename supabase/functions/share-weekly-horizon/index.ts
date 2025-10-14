@@ -12,13 +12,38 @@ serve(async (req) => {
   }
 
   try {
-    const { userId } = await req.json();
+    // Extract and verify JWT token
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "No authorization header" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
+    const token = authHeader.replace("Bearer ", "");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY")!;
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Verify the user's identity using the JWT token
+    const authClient = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: userData, error: authError } = await authClient.auth.getUser(token);
+
+    if (authError || !userData.user) {
+      console.error("Authentication error:", authError);
+      return new Response(
+        JSON.stringify({ error: "Invalid authentication" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = userData.user.id;
+    console.log("Authenticated user:", userId);
+
+    // Use service role key for data queries
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get user profile
     const { data: profile } = await supabase

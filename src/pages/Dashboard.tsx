@@ -26,9 +26,7 @@ const Dashboard = () => {
 
     setIsGeneratingCard(true);
     try {
-      const { data, error } = await supabase.functions.invoke("share-weekly-horizon", {
-        body: { userId },
-      });
+      const { data, error } = await supabase.functions.invoke("share-weekly-horizon");
 
       if (error) throw error;
 
