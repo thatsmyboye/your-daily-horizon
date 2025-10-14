@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { checkAndAwardBadges } from "@/lib/badges";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -165,6 +166,9 @@ export const DailyPulse = ({ userId }: DailyPulseProps) => {
         title: "Pulse Complete!",
         description: "Your daily reflection has been saved.",
       });
+
+      // Check for streak badges
+      await checkAndAwardBadges(userId);
     } catch (error: any) {
       console.error('Error saving pulse:', error);
       toast({

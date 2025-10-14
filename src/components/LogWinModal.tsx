@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { checkAndAwardBadges, checkFirstLevelUpBadge } from "@/lib/badges";
 import {
   Dialog,
   DialogContent,
@@ -70,15 +71,17 @@ export const LogWinModal = ({ open, onOpenChange, missions, userId, onSuccess }:
       // Get current mission data
       const { data: mission, error: missionError } = await supabase
         .from('missions')
-        .select('xp, level')
+        .select('id, title, xp, level')
         .eq('id', selectedMissionId)
         .single();
 
       if (missionError) throw missionError;
 
       // Calculate new XP and level
+      const oldLevel = mission.level;
       const newXp = mission.xp + xpAwarded;
       const newLevel = Math.floor(newXp / 100) + 1;
+      const leveledUp = newLevel > oldLevel;
 
       // Update mission with new XP and level
       const { error: updateError } = await supabase
@@ -92,17 +95,23 @@ export const LogWinModal = ({ open, onOpenChange, missions, userId, onSuccess }:
       if (updateError) throw updateError;
 
       // Check if leveled up
-      if (newLevel > mission.level) {
+      if (leveledUp) {
         toast({
-          title: "🎉 Level Up!",
-          description: `Mission reached level ${newLevel}!`,
+          title: "🚀 Level Up!",
+          description: `${mission.title} Lv.${newLevel} — Momentum!`,
         });
+        
+        // Check for first level-up badge
+        await checkFirstLevelUpBadge(userId, mission.id, mission.title, newLevel);
       } else {
         toast({
           title: "Win Logged!",
           description: `+${xpAwarded} XP awarded`,
         });
       }
+
+      // Check for other badges (30 check-ins)
+      await checkAndAwardBadges(userId);
 
       setSelectedMissionId("");
       setNote("");
