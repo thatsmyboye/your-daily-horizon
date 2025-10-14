@@ -65,10 +65,13 @@ const Settings = () => {
 
     setLoading(true);
     try {
+      // Use upsert to handle cases where profile doesn't exist yet
       const { error } = await supabase
         .from("profiles")
-        .update({ display_name: displayName })
-        .eq("id", userId);
+        .upsert({ 
+          id: userId,
+          display_name: displayName 
+        });
 
       if (error) throw error;
 
