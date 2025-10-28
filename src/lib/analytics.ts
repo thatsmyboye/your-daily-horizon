@@ -1,7 +1,10 @@
-// Provider-agnostic analytics system
-// Events are logged to console for MVP, can be easily swapped for real analytics provider
+// Enhanced analytics system with PostHog integration
+// This file maintains backward compatibility while providing enhanced analytics
 
-type AnalyticsEvent =
+import { analytics as enhancedAnalytics } from './analytics/service';
+
+// Legacy event types for backward compatibility
+type LegacyAnalyticsEvent =
   | {
       event: "onboarding_completed";
       properties: {
@@ -51,18 +54,22 @@ type AnalyticsEvent =
       };
     };
 
+// Legacy analytics object for backward compatibility
 export const analytics = {
-  track: (event: AnalyticsEvent["event"], properties: any) => {
-    // Log to console for MVP
-    console.log("[Analytics Event]", {
-      event,
-      properties,
-      timestamp: new Date().toISOString(),
-    });
-
-    // In production, this would send to analytics provider:
-    // Example for Mixpanel: mixpanel.track(event, properties)
-    // Example for Segment: analytics.track(event, properties)
-    // Example for PostHog: posthog.capture(event, properties)
+  track: (event: LegacyAnalyticsEvent["event"], properties: any) => {
+    // Use enhanced analytics if available, fallback to console
+    if (enhancedAnalytics.isInitialized()) {
+      enhancedAnalytics.track(event, properties);
+    } else {
+      // Fallback to console logging
+      console.log("[Analytics Event]", {
+        event,
+        properties,
+        timestamp: new Date().toISOString(),
+      });
+    }
   },
 };
+
+// Export enhanced analytics for new features
+export { enhancedAnalytics };

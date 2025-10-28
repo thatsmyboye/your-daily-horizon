@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { aiMonitoring } from "../_shared/ai-monitoring.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -59,6 +60,15 @@ serve(async (req) => {
     }
 
     const userId = userData.user.id;
+    
+    // Initialize monitoring
+    const requestId = aiMonitoring.generateRequestId();
+    const startTime = Date.now();
+    let tokensIn = 0;
+    let tokensOut = 0;
+    let success = false;
+    let errorType: string | undefined;
+    let errorMessage: string | undefined;
     
     // Parse and validate request body
     const body = await req.json();
@@ -242,6 +252,10 @@ serve(async (req) => {
 
     console.log("Context built:", context.substring(0, 500) + "...");
 
+    // Calculate input tokens for monitoring
+    const inputText = systemPrompt + (messages || []).map(m => m.content).join(' ');
+    tokensIn = aiMonitoring.estimateTokens(inputText);
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
 
@@ -331,6 +345,11 @@ Keep responses brief (2-4 sentences max). Focus on what they can do RIGHT NOW.`;
 
     console.log("AI response:", message);
 
+    // Calculate output tokens for monitoring
+    const outputText = message.content || '';
+    tokensOut = aiMonitoring.estimateTokens(outputText);
+    success = true;
+
     // Check for tool calls
     if (message.tool_calls && message.tool_calls.length > 0) {
       const toolCall = message.tool_calls[0];
@@ -348,6 +367,19 @@ Keep responses brief (2-4 sentences max). Focus on what they can do RIGHT NOW.`;
       );
     }
 
+    // Track successful completion
+    await aiMonitoring.trackMetric({
+      functionName: 'mentor-chat',
+      userId,
+      requestId,
+      startTime,
+      endTime: Date.now(),
+      tokensIn,
+      tokensOut,
+      success: true,
+      contextSize: context.length,
+    });
+
     return new Response(
       JSON.stringify({ message: message.content }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -355,6 +387,25 @@ Keep responses brief (2-4 sentences max). Focus on what they can do RIGHT NOW.`;
 
   } catch (error: any) {
     console.error('Error in mentor-chat:', error);
+    
+    // Track error
+    errorType = error.name || 'unknown_error';
+    errorMessage = error.message || 'Unknown error';
+    success = false;
+    
+    await aiMonitoring.trackMetric({
+      functionName: 'mentor-chat',
+      userId: userId || 'unknown',
+      requestId: requestId || aiMonitoring.generateRequestId(),
+      startTime,
+      endTime: Date.now(),
+      tokensIn,
+      tokensOut,
+      success: false,
+      errorType,
+      errorMessage,
+      contextSize: 0,
+    });
     
     // Handle validation errors separately
     if (error.name === 'ZodError') {
