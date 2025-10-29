@@ -1,11 +1,47 @@
-import posthog from 'posthog-js';
-
+// PostHog Analytics Service with fallback for missing package
 interface PostHogConfig {
   apiKey: string;
   apiHost: string;
   personProfiles: 'always' | 'identified_only';
   capturePageView: boolean;
   capturePageLeave: boolean;
+}
+
+// Mock PostHog implementation for when the package is not available
+const createMockPostHog = () => ({
+  init: (config: any) => {
+    console.log('PostHog mock initialized with config:', config);
+  },
+  capture: (event: string, properties: any) => {
+    console.log('[PostHog Mock] Event:', event, properties);
+  },
+  identify: (userId: string, traits: any) => {
+    console.log('[PostHog Mock] Identify:', userId, traits);
+  },
+  group: (groupType: string, groupKey: string, traits: any) => {
+    console.log('[PostHog Mock] Group:', groupType, groupKey, traits);
+  },
+  people: {
+    set: (properties: any) => {
+      console.log('[PostHog Mock] People set:', properties);
+    }
+  },
+  reset: () => {
+    console.log('[PostHog Mock] Reset');
+  },
+  get_distinct_id: () => 'anonymous',
+});
+
+// Try to import PostHog, fallback to mock if not available
+let posthog: any;
+
+try {
+  // This will work if posthog-js is installed
+  const posthogModule = require('posthog-js');
+  posthog = posthogModule.default || posthogModule;
+} catch (error) {
+  console.warn('PostHog not available, using mock implementation. Install posthog-js to enable analytics.');
+  posthog = createMockPostHog();
 }
 
 class PostHogAnalytics {
@@ -33,7 +69,7 @@ class PostHogAnalytics {
       person_profiles: config.personProfiles,
       capture_pageview: config.capturePageView,
       capture_pageleave: config.capturePageLeave,
-      loaded: (posthog) => {
+      loaded: (posthog: any) => {
         console.log('PostHog initialized');
         this.initialized = true;
       }

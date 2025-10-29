@@ -3,11 +3,11 @@ import App from "./App.tsx";
 import "./index.css";
 import { enhancedAnalytics } from "./lib/analytics";
 
-// Initialize analytics
+// Initialize analytics (non-blocking)
 enhancedAnalytics.initialize().then(() => {
   console.log('Analytics initialized');
 }).catch((error) => {
-  console.error('Failed to initialize analytics:', error);
+  console.warn('Analytics initialization failed, continuing without analytics:', error);
 });
 
 createRoot(document.getElementById("root")!).render(<App />);

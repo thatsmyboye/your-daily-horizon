@@ -14,7 +14,12 @@ export class AnalyticsService {
   }
 
   async initialize(): Promise<void> {
-    await this.posthog.initialize(analyticsConfig.posthog);
+    try {
+      await this.posthog.initialize(analyticsConfig.posthog);
+    } catch (error) {
+      console.warn('Failed to initialize analytics:', error);
+      // Continue without analytics - the app should still work
+    }
   }
 
   // User identification
